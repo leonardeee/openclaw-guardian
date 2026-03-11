@@ -1,0 +1,34 @@
+{
+  "name": "openclaw-guardian",
+  "version": "1.0.0",
+  "description": "OpenClaw 安全监控 - 实时检测 Prompt Injection 等可疑行为",
+  "type": "module",
+  "main": "guardian.js",
+  "bin": {
+    "guardian": "./guardian"
+  },
+  "scripts": {
+    "start": "node guardian.js"
+  },
+  "keywords": [
+    "openclaw",
+    "security",
+    "prompt-injection",
+    "ai-security",
+    "guardian",
+    "monitoring"
+  ],
+  "author": "leonardeee",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leonardeee/openclaw-guardian.git"
+  },
+  "bugs": {
+    "url": "https://github.com/leonardeee/openclaw-guardian/issues"
+  },
+  "homepage": "https://github.com/leonardeee/openclaw-guardian#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

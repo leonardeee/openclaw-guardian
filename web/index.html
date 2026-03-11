@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guardian - OpenClaw 安全监控</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <header class="header">
+      <div class="logo">
+        <span class="shield">🛡️</span>
+        <div class="title">
+          <h1>Guardian</h1>
+          <span class="subtitle">OpenClaw 安全监控</span>
+        </div>
+      </div>
+      <div class="status">
+        <span class="status-dot" id="connectionDot"></span>
+        <span id="connectionText">连接中...</span>
+      </div>
+    </header>
+
+    <!-- 统计卡片 -->
+    <div class="stats-grid">
+      <div class="stat-card critical">
+        <div class="stat-value" id="criticalCount">0</div>
+        <div class="stat-label">严重</div>
+      </div>
+      <div class="stat-card high">
+        <div class="stat-value" id="highCount">0</div>
+        <div class="stat-label">高危</div>
+      </div>
+      <div class="stat-card medium">
+        <div class="stat-value" id="mediumCount">0</div>
+        <div class="stat-label">中危</div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-value" id="totalAlerts">0</div>
+        <div class="stat-label">总告警</div>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- 告警列表 -->
+      <div class="alerts-panel">
+        <div class="panel-header">
+          <h2>🚨 实时告警</h2>
+          <div class="panel-actions">
+            <button id="clearBtn" class="btn-small">清除已读</button>
+            <button id="refreshBtn" class="btn-small">刷新</button>
+          </div>
+        </div>
+        <div class="alerts-list" id="alertsList">
+          <div class="empty-state">
+            <span class="icon">✅</span>
+            <p>暂无告警</p>
+            <p class="hint">系统正在监控中...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 详情面板 -->
+      <div class="detail-panel" id="detailPanel">
+        <div class="panel-header">
+          <h2>📋 告警详情</h2>
+        </div>
+        <div class="detail-content" id="detailContent">
+          <div class="empty-state">
+            <p>点击告警查看详情</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 配置信息 -->
+    <div class="config-bar">
+      <span>Gateway: <code id="gatewayUrl">-</code></span>
+      <span>规则数: <code id="rulesCount">0</code></span>
+      <span>AI分析: <code id="aiStatus">-</code></span>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
