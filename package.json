@@ -1,7 +1,7 @@
 {
   "name": "openclaw-piper",
   "version": "1.0.0",
-  "description": "OpenClaw Prompt Injection 监控系统 - 实时监测和告警",
+  "description": "OpenClaw Prompt Injection monitoring system - Real-time detection and alerting",
   "type": "module",
   "main": "piper.js",
   "bin": {
@@ -17,13 +17,15 @@
     "prompt-injection",
     "ai-security",
     "monitoring",
-    "alerting"
+    "alerting",
+    "llm-security",
+    "ai-safety"
   ],
-  "author": "leonardeee",
+  "author": "Dr. Graaff <leonardeee@users.noreply.github.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/leonardeee/openclaw-piper.git"
+    "url": "git+https://github.com/leonardeee/openclaw-piper.git"
   },
   "bugs": {
     "url": "https://github.com/leonardeee/openclaw-piper/issues"

@@ -2,20 +2,225 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-Compatible-blue.svg)](https://github.com/openclaw/openclaw)
 
-**OpenClaw Prompt Injection 监控系统** - 实时监测 Prompt Injection 攻击，发出告警。
+**English** | [中文](#中文文档)
 
-> **定位**：仅监测和告警，不影响 OpenClaw 行为。所有检测基于静态规则，无 AI 分析。
+---
+
+A real-time **Prompt Injection monitoring and alerting system** for OpenClaw. Detect suspicious inputs without affecting agent behavior.
+
+## 🎯 Features
+
+- **Rule-based Detection** - 8 built-in rule categories covering common Prompt Injection patterns
+- **Real-time Monitoring** - Directly monitors OpenClaw session transcript files
+- **Persistent Storage** - SQLite database ensures alerts survive restarts
+- **Visual Dashboard** - Clean Web UI for viewing alerts and statistics
+- **Severity Levels** - Critical / High / Medium / Low classification
+- **Reliable Transport** - Uses mature `ws` library with proper long message handling
+- **Extensible Rules** - JSON-based rule files for easy customization
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/leonardeee/openclaw-piper.git
+cd openclaw-piper
+
+# Install dependencies
+npm install
+
+# (Optional) Create global command
+npm link
+```
+
+### Usage
+
+```bash
+# Start Piper (default port 3457)
+piper
+
+# Or run directly
+node piper.js
+
+# Custom configuration
+piper --port 8080 --gateway http://localhost:18789
+```
+
+The dashboard will be available at `http://localhost:3457`
+
+### Command Line Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-p, --port <port>` | Dashboard port | 3457 |
+| `-g, --gateway <url>` | OpenClaw Gateway URL | http://localhost:18789 |
+| `-d, --db <path>` | Database path | ~/.openclaw/piper/events.db |
+| `--no-open` | Don't auto-open browser | - |
+| `-h, --help` | Show help | - |
+
+## 📋 Detection Rules
+
+Piper includes 8 built-in rule categories:
+
+| Category | Description | Severity | Example Patterns |
+|----------|-------------|----------|------------------|
+| **Role Bypass** | Attempts to bypass restrictions via role-play | 🔴 Critical | `ignore instructions`, `pretend to be`, `act as` |
+| **System Prompt Leak** | Attempts to extract system prompts | 🔴 Critical | `show your system prompt`, `what are your instructions` |
+| **Jailbreak** | Classic jailbreak/escape attacks | 🔴 Critical | `DAN mode`, `developer mode`, `jailbreak` |
+| **Instruction Injection** | Fake instruction markers | 🟠 High | `[SYSTEM]`, `###INSTRUCTION`, `<\|system\|>` |
+| **Data Exfiltration** | Data theft or exfiltration attempts | 🟠 High | `encode and send`, `base64 output` |
+| **Privilege Escalation** | Attempts to elevate privileges | 🟠 High | `sudo`, `chmod 777`, `enable root` |
+| **Persistence** | Establishing persistent access | 🟡 Medium | `crontab`, `startup script` |
+| **Suspicious Context** | Suspicious context references | 🟡 Medium | `above instruction`, `remember that` |
+
+## 🏗️ Project Structure
+
+```
+openclaw-piper/
+├── piper.js            # Main program (detection engine + HTTP/WS server)
+├── piper               # Startup script
+├── package.json        # Package configuration
+├── README.md           # Documentation
+├── LICENSE             # MIT License
+├── test.js             # Test suite (21 test cases)
+├── rules/
+│   └── injection.json  # Detection rules configuration
+└── web/
+    ├── index.html      # Dashboard HTML
+    ├── style.css       # Stylesheet
+    └── app.js          # Frontend logic
+```
+
+## 🔧 Extending Rules
+
+Edit `rules/injection.json` to add custom rules:
+
+```json
+{
+  "id": "custom_rule",
+  "name": "Custom Rule Name",
+  "severity": "high",
+  "patterns": [
+    "suspicious_pattern_1",
+    "suspicious_pattern_2"
+  ],
+  "description": "Rule description"
+}
+```
+
+### Rule Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique rule identifier |
+| `name` | string | Display name |
+| `severity` | string | `critical` / `high` / `medium` / `low` |
+| `patterns` | string[] | Regex patterns (case-insensitive) |
+| `description` | string | Rule description |
+
+### Whitelist Configuration
+
+```json
+{
+  "whitelist": {
+    "patterns": [
+      "^\\s*$",
+      "^(hi|hello|thanks)[\\s!.]*$"
+    ]
+  }
+}
+```
+
+## 🌐 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/events` | GET | Recent events and statistics |
+| `/api/stats` | GET | Statistics only |
+| `/api/config` | GET | Current configuration |
+| `/ws` | WebSocket | Real-time event stream |
+
+## 🔄 How It Works
+
+```
+┌─────────────────┐                    ┌─────────────┐
+│  OpenClaw       │  writes to         │  Transcript │
+│  Sessions       │ ─────────────────> │  Files      │
+└─────────────────┘                    └──────┬──────┘
+                                              │
+                                              │ monitors
+                                              ▼
+                                       ┌─────────────┐
+                                       │   Piper     │
+                                       │  Detection  │
+                                       └──────┬──────┘
+                                              │
+                                    ┌─────────┴─────────┐
+                                    ▼                   ▼
+                             ┌──────────┐       ┌──────────┐
+                             │  SQLite  │       │  Web UI  │
+                             │ Storage  │       │ Dashboard│
+                             └──────────┘       └──────────┘
+```
+
+### Detection Flow
+
+1. **Message Capture** - Piper monitors OpenClaw transcript files (`~/.openclaw/agents/*/sessions/*.jsonl`)
+2. **Rule Matching** - Detection engine performs regex matching to identify suspicious patterns
+3. **Risk Assessment** - Calculates risk score and severity level based on matched rules
+4. **Alert Generation** - Suspicious messages trigger alerts, stored in SQLite and pushed to Web UI
+
+## 🛠️ Requirements
+
+- [OpenClaw](https://github.com/openclaw/openclaw) Gateway
+- Node.js 18+
+
+## 📝 Roadmap
+
+- [ ] Alert notifications (Telegram, email, etc.)
+- [ ] More detection rules (emerging attack patterns)
+- [ ] Statistical analysis dashboard
+- [ ] Export alerts to CSV/JSON
+
+## 🤝 Contributing
+
+Issues and Pull Requests are welcome!
+
+## 📄 License
+
+[MIT License](LICENSE)
+
+## 🙏 Acknowledgments
+
+- [OpenClaw](https://github.com/openclaw/openclaw) - Open-source AI assistant framework
+- Prompt Injection research community
+
+---
+
+# 中文文档 🎯
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+[![OpenClaw](https://img.shields.io/badge/OpenClaw-兼容-blue.svg)](https://github.com/openclaw/openclaw)
+
+[English](#) | **中文**
+
+---
+
+OpenClaw 的实时 **Prompt Injection 监测和告警系统**。检测可疑输入，不影响 Agent 行为。
 
 ## 🎯 功能特性
 
-- **规则检测引擎** - 8 类预定义规则，覆盖常见 Prompt Injection 攻击模式
-- **实时监控** - 通过 WebSocket 实时连接 Gateway，即时捕获可疑输入
-- **持久化存储** - SQLite 数据库存储历史事件，重启不丢失
+- **规则检测引擎** - 8 类内置规则，覆盖常见 Prompt Injection 攻击模式
+- **实时监控** - 直接监控 OpenClaw 会话 transcript 文件
+- **持久化存储** - SQLite 数据库存储告警，重启不丢失
 - **可视化面板** - 清晰的 Web UI 展示告警详情和统计数据
 - **分级告警** - Critical / High / Medium / Low 四级严重程度
-- **可靠传输** - 使用成熟的 ws 库，正确处理大消息和长连接
-- **易于扩展** - JSON 格式规则文件，方便添加自定义检测规则
+- **可靠传输** - 使用成熟的 `ws` 库，正确处理大消息
+- **易于扩展** - JSON 格式规则文件，方便自定义
 
 ## 🚀 快速开始
 
@@ -46,7 +251,7 @@ node piper.js
 piper --port 8080 --gateway http://localhost:18789
 ```
 
-启动后会自动打开监控面板 `http://localhost:3457`
+启动后访问 `http://localhost:3457` 查看监控面板。
 
 ### 命令行参数
 
@@ -82,6 +287,7 @@ openclaw-piper/
 ├── package.json        # 包配置
 ├── README.md           # 说明文档
 ├── LICENSE             # MIT 许可证
+├── test.js             # 测试脚本（21 个测试用例）
 ├── rules/
 │   └── injection.json  # 检测规则配置
 └── web/
@@ -119,8 +325,6 @@ openclaw-piper/
 
 ### 白名单配置
 
-在 `rules/injection.json` 中配置白名单，跳过无害消息：
-
 ```json
 {
   "whitelist": {
@@ -144,42 +348,44 @@ openclaw-piper/
 ## 🔄 工作原理
 
 ```
-┌─────────────┐     WebSocket      ┌─────────────┐
-│   Gateway   │ ──────────────────>│    Piper    │
-│  (OpenClaw) │                    │  监控服务   │
-└─────────────┘                    └──────┬──────┘
-                                          │
-                                          ▼
-                                   ┌─────────────┐
-                                   │  检测引擎   │
-                                   │  规则匹配   │
-                                   └──────┬──────┘
-                                          │
-                                   ┌──────┴──────┐
-                                   ▼             ▼
-                            ┌──────────┐  ┌──────────┐
-                            │ SQLite   │  │  Web UI  │
-                            │ 持久化    │  │  实时告警 │
-                            └──────────┘  └──────────┘
+┌─────────────────┐                    ┌─────────────┐
+│  OpenClaw       │  写入              │  Session    │
+│  会话           │ ─────────────────> │  文件       │
+└─────────────────┘                    └──────┬──────┘
+                                              │
+                                              │ 监控
+                                              ▼
+                                       ┌─────────────┐
+                                       │   Piper     │
+                                       │  检测引擎   │
+                                       └──────┬──────┘
+                                              │
+                                    ┌─────────┴─────────┐
+                                    ▼                   ▼
+                             ┌──────────┐       ┌──────────┐
+                             │  SQLite  │       │  Web UI  │
+                             │  持久化   │       │  监控面板 │
+                             └──────────┘       └──────────┘
 ```
 
 ### 检测流程
 
-1. **消息捕获** - Piper 通过 WebSocket 连接 Gateway，监听入站消息
+1. **消息捕获** - Piper 监控 OpenClaw transcript 文件 (`~/.openclaw/agents/*/sessions/*.jsonl`)
 2. **规则匹配** - 检测引擎对消息进行正则匹配，识别可疑模式
 3. **风险评估** - 根据匹配到的规则计算风险分数和严重级别
 4. **告警生成** - 可疑消息触发告警，存入数据库并推送到 Web UI
 
 ## 🛠️ 前置要求
 
-- [OpenClaw](https://github.com/openclaw/openclaw) Gateway 服务
+- [OpenClaw](https://github.com/openclaw/openclaw) Gateway
 - Node.js 18+
 
 ## 📝 后续计划
 
-- [ ] 告警通知（发送到 Telegram/邮件等渠道）
+- [ ] 告警通知（Telegram、邮件等渠道）
 - [ ] 更多检测规则（覆盖新兴攻击模式）
 - [ ] 统计分析面板
+- [ ] 导出告警到 CSV/JSON
 
 ## 🤝 贡献
 
@@ -192,7 +398,7 @@ openclaw-piper/
 ## 🙏 致谢
 
 - [OpenClaw](https://github.com/openclaw/openclaw) - 开源 AI 助手框架
-- 所有 Prompt Injection 研究者和安全社区
+- Prompt Injection 研究者和安全社区
 
 ---
 
