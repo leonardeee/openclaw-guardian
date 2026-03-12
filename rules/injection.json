@@ -136,8 +136,9 @@
   "whitelist": {
     "patterns": [
       "^\\s*$",
-      "^(hi|hello|hey|thanks|thank you|ok|yes|no|sure|好的|谢谢|嗨|你好)[\\s!.]*$"
+      "^(hi|hello|hey|thanks|thank you|ok|yes|no|sure|好的|谢谢|嗨|你好)[\\s!.]*$",
+      "^System:\\s*\\[\\d{4}-\\d{2}-\\d{2}"
     ],
-    "description": "无害短消息，跳过检测"
+    "description": "无害短消息和系统日志格式，跳过检测"
   }
 }

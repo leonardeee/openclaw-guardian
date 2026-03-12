@@ -20,6 +20,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 import { homedir } from 'node:os';
+import { watch } from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -186,8 +187,14 @@ function saveEvent(event) {
 
 // 添加事件
 function addEvent(event) {
-  event.id = crypto.randomUUID();
-  event.timestamp = new Date().toISOString();
+  // 如果没有 id，生成一个
+  if (!event.id) {
+    event.id = crypto.randomUUID();
+  }
+  // 如果没有 timestamp，使用当前时间
+  if (!event.timestamp) {
+    event.timestamp = new Date().toISOString();
+  }
   
   // 保存到数据库
   saveEvent(event);
@@ -480,6 +487,8 @@ function connectToGateway() {
   
   gatewayClient.on('open', () => {
     console.log('✅ 已连接到 Gateway');
+    // 启动文件监控
+    startFileMonitoring();
   });
   
   gatewayClient.on('message', (data) => {
@@ -505,12 +514,143 @@ function connectToGateway() {
   
   gatewayClient.on('close', () => {
     console.log('⚠️  Gateway 连接断开，5秒后重连...');
+    stopFileMonitoring();
     setTimeout(connectToGateway, 5000);
   });
   
   gatewayClient.on('error', (err) => {
     console.error('❌ Gateway 连接错误:', err.message);
   });
+}
+
+// ===== 会话文件监控（主要监控方式）=====
+let fileWatchers = [];
+let processedLines = new Map(); // filePath -> last processed line number
+
+function startFileMonitoring() {
+  console.log('📡 启动会话文件监控...');
+  
+  // 监控 agents 目录下的所有 session transcript 文件
+  const agentsDir = path.join(homedir(), '.openclaw', 'agents');
+  
+  if (!fs.existsSync(agentsDir)) {
+    console.log('⚠️  agents 目录不存在，等待创建...');
+    // 监控父目录，等待 agents 创建
+    const parentDir = path.join(homedir(), '.openclaw');
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
+  }
+  
+  // 扫描现有的 session 文件
+  scanSessionFiles();
+  
+  // 监控文件变化
+  const sessionWatcher = watch(agentsDir, { recursive: true }, (eventType, filename) => {
+    if (filename && filename.endsWith('.jsonl')) {
+      const filePath = path.join(agentsDir, filename);
+      processNewLines(filePath);
+    }
+  });
+  
+  fileWatchers.push(sessionWatcher);
+  console.log('✅ 会话文件监控已启动');
+}
+
+function scanSessionFiles() {
+  const agentsDir = path.join(homedir(), '.openclaw', 'agents');
+  
+  if (!fs.existsSync(agentsDir)) return;
+  
+  // 扫描所有 agent 目录
+  const agentDirs = fs.readdirSync(agentsDir, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => d.name);
+  
+  for (const agent of agentDirs) {
+    const sessionsDir = path.join(agentsDir, agent, 'sessions');
+    if (!fs.existsSync(sessionsDir)) continue;
+    
+    const sessionFiles = fs.readdirSync(sessionsDir)
+      .filter(f => f.endsWith('.jsonl') && !f.includes('.reset'));
+    
+    for (const file of sessionFiles) {
+      const filePath = path.join(sessionsDir, file);
+      
+      // 处理现有文件中的所有消息（历史扫描）
+      console.log(`📄 扫描历史: ${file}`);
+      processNewLines(filePath, true);
+    }
+  }
+}
+
+function processNewLines(filePath, isHistoryScan = false) {
+  if (!fs.existsSync(filePath)) return;
+  
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const lines = content.split('\n').filter(l => l.trim());
+  const lastProcessed = processedLines.get(filePath) || 0;
+  
+  // 历史扫描：处理所有行；实时监控：只处理新行
+  const startLine = isHistoryScan ? 0 : lastProcessed;
+  
+  // 处理行
+  for (let i = startLine; i < lines.length; i++) {
+    try {
+      const entry = JSON.parse(lines[i]);
+      
+      // 检查是否是用户消息
+      // 格式: {"type":"message", "message":{"role":"user", "content":[{"type":"text","text":"..."}]}}
+      if (entry.type === 'message' && entry.message?.role === 'user') {
+        const content = entry.message.content;
+        
+        // 提取文本
+        let text = '';
+        if (Array.isArray(content)) {
+          for (const item of content) {
+            if (item.type === 'text' && item.text) {
+              text += item.text + ' ';
+            }
+          }
+        } else if (typeof content === 'string') {
+          text = content;
+        }
+        
+        if (text && text.trim()) {
+          // 提取 session 信息
+          const sessionKey = filePath.includes('/agents/') 
+            ? filePath.split('/agents/')[1].split('/')[0] 
+            : 'unknown';
+          
+          // 检查是否已存在（避免重复）
+          if (db && entry.id) {
+            const existing = db.prepare('SELECT id FROM events WHERE id = ?').get(entry.id);
+            if (existing) continue; // 已处理过
+          }
+          
+          analyzeInput(text.trim(), { 
+            id: entry.id, // 使用消息 ID
+            sessionKey: `agent:${sessionKey}`,
+            source: 'transcript',
+            messageId: entry.id,
+            filePath,
+            timestamp: entry.timestamp
+          });
+        }
+      }
+    } catch (e) {
+      // 解析错误，忽略
+    }
+  }
+  
+  processedLines.set(filePath, lines.length);
+}
+
+function stopFileMonitoring() {
+  for (const watcher of fileWatchers) {
+    watcher.close();
+  }
+  fileWatchers = [];
 }
 
 // ===== 主程序 =====
