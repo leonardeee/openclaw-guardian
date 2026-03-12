@@ -1,15 +1,18 @@
 <a id="english"></a>
 # OpenClaw Piper 🎯
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Compatible-blue.svg)](https://github.com/openclaw/openclaw)
+<img width="384" height="256" alt="ChatGPT Image 2026年3月12日 20_13_18" src="https://github.com/user-attachments/assets/62b88da4-1302-4ad3-87d5-c717fc17393c" />
 
 **English** | [中文](#chinese)
 
 ---
 
 A real-time **Prompt Injection monitoring and alerting system** for OpenClaw. Detect suspicious inputs without affecting agent behavior.
+
+<img width="768" height="512" alt="ChatGPT Image 2026年3月12日 20_10_16" src="https://github.com/user-attachments/assets/31b4cc20-3a71-4418-bee2-67e097bf549d" />
+
 
 ## 🎯 Features
 
