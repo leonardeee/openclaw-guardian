@@ -1,10 +1,11 @@
+<a id="english"></a>
 # OpenClaw Piper 🎯
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Compatible-blue.svg)](https://github.com/openclaw/openclaw)
 
-**English** | [中文](#中文文档)
+**English** | [中文](#chinese)
 
 ---
 
@@ -199,14 +200,14 @@ Issues and Pull Requests are welcome!
 - Prompt Injection research community
 
 ---
-
+<a id="chinese"></a>
 # 中文文档 🎯
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-兼容-blue.svg)](https://github.com/openclaw/openclaw)
 
-[English](#) | **中文**
+[English](#english) | **中文**
 
 ---
 
