@@ -66,12 +66,13 @@ if (!config.db) {
 }
 
 // ===== 动态导入依赖 =====
-let WebSocket, Database;
+let WebSocket, WebSocketServer, Database;
 
 async function loadDependencies() {
   try {
     const wsModule = await import('ws');
-    WebSocket = wsModule.default || wsModule.WebSocket;
+    WebSocket = wsModule.WebSocket;
+    WebSocketServer = wsModule.WebSocketServer;
     console.log('✅ 已加载 ws 库');
   } catch (err) {
     console.error('❌ 无法加载 ws 库，请运行: npm install ws');
@@ -442,7 +443,7 @@ function createHTTPServer() {
 
 // ===== WebSocket 服务器 =====
 function createWebSocketServer() {
-  wss = new WebSocket.Server({ server, path: '/ws' });
+  wss = new WebSocketServer({ server, path: '/ws' });
   
   wss.on('connection', (ws) => {
     console.log('📡 前端客户端已连接');
