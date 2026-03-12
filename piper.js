@@ -196,6 +196,14 @@ function addEvent(event) {
     event.timestamp = new Date().toISOString();
   }
   
+  // 检查是否已存在（避免重复）
+  if (db) {
+    const existing = db.prepare('SELECT id FROM events WHERE id = ?').get(event.id);
+    if (existing) {
+      return; // 已存在，跳过
+    }
+  }
+  
   // 保存到数据库
   saveEvent(event);
   
@@ -312,6 +320,14 @@ function analyzeInput(text, context) {
         channel: context.channel
       }
     };
+    
+    // 使用传入的 id 和 timestamp（如果有）
+    if (context.id) {
+      event.id = context.id;
+    }
+    if (context.timestamp) {
+      event.timestamp = context.timestamp;
+    }
     
     addEvent(event);
     
@@ -526,8 +542,16 @@ function connectToGateway() {
 // ===== 会话文件监控（主要监控方式）=====
 let fileWatchers = [];
 let processedLines = new Map(); // filePath -> last processed line number
+let fileMonitoringStarted = false; // 防止重复启动
 
 function startFileMonitoring() {
+  // 避免重复启动
+  if (fileMonitoringStarted) {
+    console.log('📡 文件监控已在运行中');
+    return;
+  }
+  fileMonitoringStarted = true;
+  
   console.log('📡 启动会话文件监控...');
   
   // 监控 agents 目录下的所有 session transcript 文件
@@ -547,9 +571,9 @@ function startFileMonitoring() {
   
   // 监控文件变化
   const sessionWatcher = watch(agentsDir, { recursive: true }, (eventType, filename) => {
-    if (filename && filename.endsWith('.jsonl')) {
+    if (filename && filename.endsWith('.jsonl') && !filename.includes('.reset')) {
       const filePath = path.join(agentsDir, filename);
-      processNewLines(filePath);
+      processNewLines(filePath, false);
     }
   });
   
@@ -622,14 +646,8 @@ function processNewLines(filePath, isHistoryScan = false) {
             ? filePath.split('/agents/')[1].split('/')[0] 
             : 'unknown';
           
-          // 检查是否已存在（避免重复）
-          if (db && entry.id) {
-            const existing = db.prepare('SELECT id FROM events WHERE id = ?').get(entry.id);
-            if (existing) continue; // 已处理过
-          }
-          
           analyzeInput(text.trim(), { 
-            id: entry.id, // 使用消息 ID
+            id: entry.id, // 使用消息 ID 作为事件 ID
             sessionKey: `agent:${sessionKey}`,
             source: 'transcript',
             messageId: entry.id,
@@ -647,6 +665,8 @@ function processNewLines(filePath, isHistoryScan = false) {
 }
 
 function stopFileMonitoring() {
+  // 只关闭 watcher，不重置 fileMonitoringStarted
+  // 这样重连时不会重复扫描历史
   for (const watcher of fileWatchers) {
     watcher.close();
   }
