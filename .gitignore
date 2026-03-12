@@ -1,27 +1,5 @@
-# Dependencies
 node_modules/
-
-# OS files
+*.db
+*.db-journal
 .DS_Store
-Thumbs.db
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Logs
 *.log
-logs/
-
-# Environment
-.env
-.env.local
-
-# Build
-dist/
-build/
-
-# Test
-coverage/

@@ -1,34 +1,39 @@
 {
-  "name": "openclaw-guardian",
+  "name": "openclaw-piper",
   "version": "1.0.0",
-  "description": "OpenClaw 安全监控 - 实时检测 Prompt Injection 等可疑行为",
+  "description": "OpenClaw Prompt Injection 监控系统 - 实时监测和告警",
   "type": "module",
-  "main": "guardian.js",
+  "main": "piper.js",
   "bin": {
-    "guardian": "./guardian"
+    "piper": "./piper"
   },
   "scripts": {
-    "start": "node guardian.js"
+    "start": "node piper.js",
+    "test": "node test.js"
   },
   "keywords": [
     "openclaw",
     "security",
     "prompt-injection",
     "ai-security",
-    "guardian",
-    "monitoring"
+    "monitoring",
+    "alerting"
   ],
   "author": "leonardeee",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/leonardeee/openclaw-guardian.git"
+    "url": "https://github.com/leonardeee/openclaw-piper.git"
   },
   "bugs": {
-    "url": "https://github.com/leonardeee/openclaw-guardian/issues"
+    "url": "https://github.com/leonardeee/openclaw-piper/issues"
   },
-  "homepage": "https://github.com/leonardeee/openclaw-guardian#readme",
+  "homepage": "https://github.com/leonardeee/openclaw-piper#readme",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "better-sqlite3": "^11.7.0"
   }
 }

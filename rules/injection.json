@@ -28,9 +28,11 @@
       "patterns": [
         "(show|print|display|reveal|tell|write|output) (me )?(your )?(system|hidden|secret|initial|original) (prompt|instructions|directives)",
         "what (are|is) (your )?(the )?(system|hidden|secret) (prompt|instructions)",
+        "what (are|is) (your )?instructions\\??",
         "repeat (your )?(system|initial|original) (prompt|instructions)",
         "(echo|print|display) (back )?your (system|initial) prompt",
-        "output (your|the) (full|complete|entire) (system|hidden) (prompt|message)"
+        "output (your|the) (full|complete|entire) (system|hidden) (prompt|message)",
+        "(give|tell|show) (me )?(your )?instructions"
       ],
       "description": "检测尝试获取系统提示词"
     },

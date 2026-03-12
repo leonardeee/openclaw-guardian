@@ -1,5 +1,5 @@
 #!/bin/bash
-# Guardian 启动脚本
+# Piper 启动脚本
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NODE_PATH="/opt/homebrew/opt/node@22/bin/node"
@@ -13,6 +13,5 @@ if [ -z "$NODE_PATH" ]; then
   exit 1
 fi
 
-# 使用实际的脚本目录
-GUARDIAN_DIR="$HOME/.openclaw/workspace/openclaw-guardian"
-exec "$NODE_PATH" "$GUARDIAN_DIR/guardian.js" "$@"
+# 使用脚本所在目录
+exec "$NODE_PATH" "$SCRIPT_DIR/piper.js" "$@"

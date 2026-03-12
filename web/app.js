@@ -1,5 +1,5 @@
 /**
- * Guardian 监控面板前端
+ * Piper 监控面板前端
  */
 
 // DOM 元素
@@ -14,7 +14,7 @@ const elements = {
   detailContent: document.getElementById('detailContent'),
   gatewayUrl: document.getElementById('gatewayUrl'),
   rulesCount: document.getElementById('rulesCount'),
-  clearBtn: document.getElementById('clearBtn'),
+  dbPath: document.getElementById('dbPath'),
   refreshBtn: document.getElementById('refreshBtn')
 };
 
@@ -59,7 +59,13 @@ function connectWebSocket() {
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
-      if (data.type === 'event') {
+      if (data.type === 'init') {
+        // 初始化数据
+        alerts = data.data || [];
+        renderAlerts();
+        updateStatsFromAlerts();
+      } else if (data.type === 'event') {
+        // 新事件
         addAlert(data.data);
       }
     } catch (e) {
@@ -104,6 +110,7 @@ async function loadConfig() {
     
     elements.gatewayUrl.textContent = config.gateway;
     elements.rulesCount.textContent = config.rulesCount;
+    elements.dbPath.textContent = config.dbPath ? config.dbPath.split('/').pop() : '-';
   } catch (e) {
     console.error('加载配置失败:', e);
   }
@@ -115,6 +122,19 @@ function updateStats(stats) {
   elements.highCount.textContent = stats?.bySeverity?.high || 0;
   elements.mediumCount.textContent = stats?.bySeverity?.medium || 0;
   elements.totalAlerts.textContent = stats?.totalAlerts || 0;
+}
+
+function updateStatsFromAlerts() {
+  const stats = {
+    totalAlerts: alerts.length,
+    bySeverity: {
+      critical: alerts.filter(a => a.risk?.level === 'critical').length,
+      high: alerts.filter(a => a.risk?.level === 'high').length,
+      medium: alerts.filter(a => a.risk?.level === 'medium').length,
+      low: alerts.filter(a => a.risk?.level === 'low').length
+    }
+  };
+  updateStats(stats);
 }
 
 // ===== 渲染告警列表 =====
@@ -164,25 +184,14 @@ function renderAlerts() {
 
 // ===== 添加新告警 =====
 function addAlert(alert) {
+  // 避免重复
+  if (alerts.find(a => a.id === alert.id)) return;
+  
   alerts.unshift(alert);
   if (alerts.length > 100) alerts.pop();
   
-  // 更新统计
-  const stats = {
-    totalAlerts: alerts.length,
-    bySeverity: {
-      critical: alerts.filter(a => a.risk?.level === 'critical').length,
-      high: alerts.filter(a => a.risk?.level === 'high').length,
-      medium: alerts.filter(a => a.risk?.level === 'medium').length,
-      low: alerts.filter(a => a.risk?.level === 'low').length
-    }
-  };
-  
-  updateStats(stats);
+  updateStatsFromAlerts();
   renderAlerts();
-  
-  // 播放通知音（可选）
-  // playAlertSound(alert.risk?.level);
 }
 
 // ===== 选择告警 =====
@@ -235,10 +244,10 @@ function selectAlert(id) {
       <div class="detail-text">${escapeHtml(alert.text || '(无内容)')}</div>
     </div>
     
-    ${alert.context ? `
+    ${alert.context && Object.keys(alert.context).length ? `
       <div class="detail-section">
         <h3>上下文</h3>
-        <div class="detail-text">${JSON.stringify(alert.context, null, 2)}</div>
+        <div class="detail-text">${escapeHtml(JSON.stringify(alert.context, null, 2))}</div>
       </div>
     ` : ''}
   `;
@@ -246,17 +255,6 @@ function selectAlert(id) {
 
 // ===== 事件绑定 =====
 elements.refreshBtn.addEventListener('click', loadData);
-
-elements.clearBtn.addEventListener('click', () => {
-  alerts = alerts.filter(a => a.id !== selectedAlertId);
-  selectedAlertId = null;
-  loadData();
-  elements.detailContent.innerHTML = `
-    <div class="empty-state">
-      <p>点击告警查看详情</p>
-    </div>
-  `;
-});
 
 // ===== 初始化 =====
 function init() {
